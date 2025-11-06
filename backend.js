@@ -9,8 +9,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// The big static SYSTEM_PROMPT is no longer needed!
-
 app.post('/ask', async (req, res) => {
     // The 'query' from the app now contains the FULL, dynamic prompt.
     const { query } = req.body;
@@ -22,11 +20,10 @@ app.post('/ask', async (req, res) => {
     try {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
         const model = genAI.getGenerativeModel({
-            // NOTE: Using a valid, efficient model name. "gemini-2.5-pro" is not a valid name.
-            model: "gemini-2.5-pro" 
+            // NOTE: Using a valid, efficient model name. "gemini-2.5-pro" is not a real model name.
+            model: "gemini-1.5-flash" 
         });
 
-        // The prompt is now passed directly from the app, no replacement needed.
         const prompt = query;
 
         const result = await model.generateContent(prompt);
@@ -34,13 +31,19 @@ app.post('/ask', async (req, res) => {
 
         let textResponse = response.text();
         
-        // Log the raw response to your backend console for easy debugging
         console.log("LLM Raw Response:", textResponse);
         
-        // Clean up potential markdown fences from the AI's response
         textResponse = textResponse.replace(/^```json\n/, '').replace(/\n```$/, '');
 
-        const jsonResponse = JSON.parse(textResponse);
+        let jsonResponse;
+        try {
+            // First, try to parse the response as JSON.
+            jsonResponse = JSON.parse(textResponse);
+        } catch (e) {
+            // If parsing fails, assume it's a plain text conversational reply.
+            console.log("JSON parsing failed, wrapping response in a 'reply' object.");
+            jsonResponse = { "reply": textResponse };
+        }
 
         res.json(jsonResponse);
 

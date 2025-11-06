@@ -21,7 +21,7 @@ app.post('/ask', async (req, res) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
         const model = genAI.getGenerativeModel({
             // NOTE: Using a valid, efficient model name. "gemini-2.5-pro" is not a real model name.
-            model: "gemini-1.5-flash" 
+            model: "gemini-2.5-pro" 
         });
 
         const prompt = query;
